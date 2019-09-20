@@ -16,17 +16,16 @@ var logEntry *logrus.Entry
 func init() {
 	infoPath := myConf.GetString("server", "infoLogPath", "./info.log")
 	errorPath := myConf.GetString("server", "errorLogPath", "./error.log")
-	localIp, err := utils.GetLocalIp()
-	if err != nil {
-		panic(err)
-	}
 	log := logrus.StandardLogger()
-	logEntry = log.WithField("localIp", localIp)
+	logEntry = log.WithField("localIp", utils.GetLocalIp())
 	log.SetFormatter(&logrus.TextFormatter{
 		DisableColors:   true,
 		TimestampFormat: "2006-01-02 15:04:05",
 	})
-	// mylog.SetNoLock()
+	// 不向控制台打印
+	//log.Out = ioutil.Discard
+	// 写文件不加锁，具体参考logrus文档确认可不可以不锁
+	// log.SetNoLock()
 	infoWriter, err := rotatelogs.New(
 		infoPath+".%Y-%m-%d",
 		rotatelogs.WithLinkName(infoPath),

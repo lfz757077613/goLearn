@@ -1,21 +1,21 @@
 package myConf
 
 import (
-	"flag"
 	"gopkg.in/ini.v1"
 )
 
 var iniConf *ini.File
 
+const confPath = "main.ini"
+
 func init() {
-	confFilePath := flag.String("c", "main.ini", "main conf path")
-	// 注释掉才能跑测试
-	//flag.Parse()
 	var err error
-	iniConf, err = ini.Load(*confFilePath)
+	iniConf, err = ini.Load(confPath)
 	if err != nil {
 		panic(err)
 	}
+	// 配置只读，可以提升性能
+	iniConf.BlockMode = false
 }
 
 func GetString(section, key, defaultValue string) string {

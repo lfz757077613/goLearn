@@ -1,9 +1,12 @@
 package myHttp
 
 import (
+	"crypto/tls"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -13,14 +16,51 @@ var httpClient = &http.Client{
 	CheckRedirect: func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	},
+	Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+		MaxConnsPerHost:     300,
+		MaxIdleConns:        150,
+		MaxIdleConnsPerHost: 75,
+		IdleConnTimeout:     10 * time.Second,
+	},
 }
 
-
-func HttpPostWithRetry(url, body string, retryTime int) (result []byte, err error) {
+func HttpGetWithRetry(url string, retryTime int) (result []byte, err error) {
+	if retryTime < 0 {
+		return nil, errors.New("HttpGetWithRetry retryTime is " + strconv.Itoa(retryTime))
+	}
 	for i := 0; i < retryTime; i++ {
-		result, err = HttpPost(url, body)
+		if result, err = HttpGet(url); err == nil {
+			break
+		}
 	}
 	return
+}
+
+func HttpPostWithRetry(url, body string, retryTime int) (result []byte, err error) {
+	if retryTime < 0 {
+		return nil, errors.New("HttpPostWithRetry retryTime is " + strconv.Itoa(retryTime))
+	}
+	for i := 0; i < retryTime; i++ {
+		if result, err = HttpPost(url, body); err == nil {
+			break
+		}
+	}
+	return
+}
+
+func HttpGet(url string) ([]byte, error) {
+	resp, err := httpClient.Get(url)
+	// 重定向时，resp不为nil，如果CheckRedirect返回非ErrUseLastResponse错误，err也不为nil
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+	if err != nil {
+		return nil, err
+	}
+	return ioutil.ReadAll(resp.Body)
 }
 
 func HttpPost(url, body string) ([]byte, error) {
@@ -34,4 +74,3 @@ func HttpPost(url, body string) ([]byte, error) {
 	}
 	return ioutil.ReadAll(resp.Body)
 }
-

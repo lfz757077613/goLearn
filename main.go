@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/DeanThompson/ginpprof"
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/lfz757077613/goLearn/handler"
 	"github.com/lfz757077613/goLearn/utils/myConf"
@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 	"time"
 )
@@ -20,7 +21,7 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	gin.DisableConsoleColor()
 	r := gin.New()
-	ginpprof.Wrap(r)
+	pprof.Register(r)
 	r.Use(loggerMidware)
 	// 拥有共同url前缀的的路由可以划为一个分组
 	apiGroup := r.Group("/api")
@@ -80,13 +81,13 @@ func errWrapper(handler func(c *gin.Context) error) func(*gin.Context) {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
-				myLog.GetUidTraceLog(c).Errorf("unknown panic: [%s]", err)
+				myLog.GetUidTraceLog(c).Errorf("unknown panic: [%s], stacktrace", err, debug.Stack())
 				c.AbortWithStatus(http.StatusInternalServerError)
 			}
 		}()
 		err := handler(c)
 		if err != nil {
-			myLog.GetUidTraceLog(c).Errorf("unknown error: [%s]", err)
+			myLog.GetUidTraceLog(c).Errorf("unknown error: [%s], stacktrace", err, debug.Stack())
 			c.AbortWithStatus(http.StatusInternalServerError)
 		}
 	}

@@ -12,16 +12,13 @@ func GetMapValue(m map[string]string, key, defaultValue string) string {
 	return defaultValue
 }
 
-func GetLocalIp() (string, error) {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return "", err
-	}
+func GetLocalIp() string {
+	addrs, _ := net.InterfaceAddrs()
 	for _, address := range addrs {
 		// 检查ip地址判断是否回环地址
 		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() && ipnet.IP.To4() != nil {
-			return ipnet.IP.String(), nil
+			return ipnet.IP.String()
 		}
 	}
-	return "", nil
+	return ""
 }
