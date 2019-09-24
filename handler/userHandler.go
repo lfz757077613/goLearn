@@ -19,17 +19,14 @@ func GetUserHandler() *UserHandler {
 	return userHandlerSingleton
 }
 
-func (handler *UserHandler) HandleLogin(context *gin.Context) error {
+func (handler *UserHandler) HandleLogin(context *gin.Context) {
 	context.JSON(http.StatusOK, gin.H{
 		"key": 11,
 	})
-	return nil
 }
 
-func (handler *UserHandler) HandleIsLogin(context *gin.Context) error {
-	return nil
+func (handler *UserHandler) HandleIsLogin(context *gin.Context) {
 }
 
-func (handler *UserHandler) HandleRegister(context *gin.Context) error {
-	return nil
+func (handler *UserHandler) HandleRegister(context *gin.Context) {
 }

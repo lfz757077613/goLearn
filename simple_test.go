@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"github.com/go-redis/redis"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	"github.com/lfz757077613/goLearn/utils"
 	"github.com/lfz757077613/goLearn/utils/myConf"
 	"github.com/lfz757077613/goLearn/utils/myMysql"
 	. "github.com/smartystreets/goconvey/convey"
@@ -33,5 +35,12 @@ func TestSqlx(t *testing.T) {
 		err = database.Select(&fruits, "select * from fruit limit 1")
 		So(err, ShouldBeNil)
 		So(len(fruits), ShouldBeGreaterThanOrEqualTo, 0)
+	})
+}
+
+func TestSimple(t *testing.T) {
+	_ = utils.FileLineProcess("tt.txt", func(line string) error {
+		fmt.Println(line)
+		return nil
 	})
 }

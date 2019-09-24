@@ -2,17 +2,15 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/lfz757077613/goLearn/handler"
+	"github.com/lfz757077613/goLearn/midware"
 	"github.com/lfz757077613/goLearn/utils/myConf"
 	"github.com/lfz757077613/goLearn/utils/myLog"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"os/signal"
-	"runtime/debug"
 	"syscall"
 	"time"
 )
@@ -22,13 +20,13 @@ func main() {
 	gin.DisableConsoleColor()
 	r := gin.New()
 	pprof.Register(r)
-	r.Use(loggerMidware)
+	r.Use(midware.MyLogger, midware.MyRecover, midware.JwtMidware)
 	// 拥有共同url前缀的的路由可以划为一个分组
 	apiGroup := r.Group("/api")
-	userHandler:= handler.UserHandler{}
-	apiGroup.Any("/login", errWrapper(userHandler.HandleLogin))
-	apiGroup.Any("/islogin", errWrapper(userHandler.HandleIsLogin))
-	apiGroup.Any("/register", errWrapper(userHandler.HandleRegister))
+	userHandler := handler.UserHandler{}
+	apiGroup.Any("/login", userHandler.HandleLogin)
+	apiGroup.Any("/islogin", userHandler.HandleIsLogin)
+	apiGroup.Any("/register", userHandler.HandleRegister)
 	s := &http.Server{
 		Addr:         ":" + myConf.GetString("server", "port", "8080"),
 		Handler:      r,
@@ -60,35 +58,4 @@ func waitShutDownSignal(s *http.Server) {
 		myLog.Errorf("Server Shutdown: [%s]", err)
 	}
 	myLog.Info("Server exit")
-}
-
-// 传入绑定了uid的log组件，打印请求整体日志
-func loggerMidware(c *gin.Context) {
-	start := time.Now()
-	traceLog := myLog.WithField("uid", c.Query("uid"))
-	c.Set("traceLog", traceLog)
-	c.Next()
-	traceLog.WithFields(logrus.Fields{
-		"remoteIp": c.ClientIP(),
-		"method":   c.Request.Method,
-		"url":      c.Request.URL.Path + "?" + c.Request.URL.RawQuery,
-		"status":   c.Writer.Status(),
-		"cost":     fmt.Sprintf("%dms", time.Since(start).Milliseconds()),
-	}).Info("total log")
-}
-
-func errWrapper(handler func(c *gin.Context) error) func(*gin.Context) {
-	return func(c *gin.Context) {
-		defer func() {
-			if err := recover(); err != nil {
-				myLog.GetUidTraceLog(c).Errorf("unknown panic: [%s], stacktrace", err, debug.Stack())
-				c.AbortWithStatus(http.StatusInternalServerError)
-			}
-		}()
-		err := handler(c)
-		if err != nil {
-			myLog.GetUidTraceLog(c).Errorf("unknown error: [%s], stacktrace", err, debug.Stack())
-			c.AbortWithStatus(http.StatusInternalServerError)
-		}
-	}
 }

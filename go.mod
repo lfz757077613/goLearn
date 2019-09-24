@@ -3,6 +3,7 @@ module github.com/lfz757077613/goLearn
 go 1.13
 
 require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fastly/go-utils v0.0.0-20180712184237-d95a45783239 // indirect
 	github.com/gin-contrib/pprof v1.2.1
 	github.com/gin-gonic/gin v1.4.0
