@@ -19,6 +19,7 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	gin.DisableConsoleColor()
 	r := gin.New()
+	r.RedirectTrailingSlash = false
 	pprof.Register(r)
 	r.Use(midware.MyLogger, midware.MyRecover, midware.JwtMidware)
 	// 拥有共同url前缀的的路由可以划为一个分组
