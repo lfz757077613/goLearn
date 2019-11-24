@@ -7,7 +7,8 @@ import (
 	"github.com/lfz757077613/goLearn/handler"
 	"github.com/lfz757077613/goLearn/midware"
 	"github.com/lfz757077613/goLearn/utils/myConf"
-	"github.com/lfz757077613/goLearn/utils/myLog"
+	"github.com/lfz757077613/goLearn/utils/shutDownhook"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"os/signal"
@@ -21,7 +22,7 @@ func main() {
 	r := gin.New()
 	r.RedirectTrailingSlash = false
 	pprof.Register(r)
-	r.Use(midware.MyLogger, midware.MyRecover, midware.JwtMidware)
+	r.Use(midware.MyLogger, midware.MyRecover)
 	// 拥有共同url前缀的的路由可以划为一个分组
 	apiGroup := r.Group("/api")
 	userHandler := handler.UserHandler{}
@@ -35,10 +36,9 @@ func main() {
 		WriteTimeout: time.Second * time.Duration(myConf.GetInt("server", "writeTimeout", 3)),
 	}
 	go func() {
-		myLog.Info("server start")
+		logrus.Info("server start")
 		if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			myLog.Errorf("ListenAndServe error: [%s]", err)
-			panic(err)
+			logrus.Panicf("ListenAndServe error: [%s]", err)
 		}
 	}()
 	// 优雅关机
@@ -52,11 +52,12 @@ func waitShutDownSignal(s *http.Server) {
 	// kill -9 is syscall.SIGKILL but can't be catch, so don't need add it
 	signal.Notify(quitSignalChan, syscall.SIGINT, syscall.SIGTERM)
 	single := <-quitSignalChan
-	myLog.Infof("quit signal received: [%s]", single.String())
+	logrus.Infof("quit signal received: [%s]", single.String())
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := s.Shutdown(ctx); err != nil {
-		myLog.Errorf("Server Shutdown: [%s]", err)
+		logrus.Errorf("Server Shutdown error: [%s]", err)
 	}
-	myLog.Info("Server exit")
+	shutDownhook.RunShutdownHook()
+	logrus.Info("Server exit")
 }

@@ -10,7 +10,7 @@ import (
 func MyRecover(c *gin.Context) {
 	defer func() {
 		if err := recover(); err != nil {
-			myLog.GetUidTraceLog(c).Errorf("unknown panic: [%s], stacktrace", err, debug.Stack())
+			myLog.GetUidTraceLog(c).Errorf("unknown panic: [%s], stacktrace: [%s]", err, debug.Stack())
 			c.AbortWithStatus(http.StatusInternalServerError)
 		}
 	}()

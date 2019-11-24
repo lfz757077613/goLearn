@@ -6,7 +6,11 @@ import (
 	"net"
 	"os"
 	"strings"
+	"sync"
 )
+
+var localIp string
+var once sync.Once
 
 // 返回map中key对应的value，key不存在返回默认值
 func GetMapValue(m map[string]string, key, defaultValue string) string {
@@ -17,14 +21,17 @@ func GetMapValue(m map[string]string, key, defaultValue string) string {
 }
 
 func GetLocalIp() string {
-	addrs, _ := net.InterfaceAddrs()
-	for _, address := range addrs {
-		// 检查ip地址判断是否回环地址
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() && ipnet.IP.To4() != nil {
-			return ipnet.IP.String()
+	once.Do(func() {
+		addrs, _ := net.InterfaceAddrs()
+		for _, address := range addrs {
+			// 检查ip地址判断是否回环地址
+			if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() && ipnet.IP.To4() != nil {
+				localIp = ipnet.IP.String()
+				return
+			}
 		}
-	}
-	return ""
+	})
+	return localIp
 }
 
 func FileLineProcess(path string, f func(line string) error) error {

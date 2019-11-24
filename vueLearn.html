@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>vueLearn</title>
+        <script src="vue2.6.10.js"></script>
+    </head>
+    <body>
+        <div id="root">
+            <counter ref="counter1" @change="handlerChange" :lfz="'lfz'">
+                <template slot-scope="props">
+                    <li>{{props.item}}</li>
+                </template>
+            </counter>
+            <counter ref="counter2" @change="handlerChange"></counter>
+            <div @click="handlerClick">{{sum}}</div>
+        </div>
+        <script>
+            // Vue.component('counter', {
+            //     template: '<div @click="handlerClick">{{count}}</div>',
+            //     data: function () {
+            //         return {
+            //             count: 0
+            //         }
+            //     },
+            //     methods: {
+            //         handlerClick: function () {
+            //             this.count++;
+            //             this.$emit('change')
+            //         }
+            //     }
+            // });
+            Vue.prototype.bus = new Vue();
+            var vm = new Vue({
+                el: '#root',
+                components: {
+                    counter: {
+                        props: {
+                            lfz: {
+                                type: String,
+                                required: false,
+                                default: 'default',
+                                validator: function (value) {
+                                    return value.length > 0
+                                }
+                            }
+                        },
+                        // props: ['lfz'],
+                        // props: {
+                        //     lfz: String,
+                        // },
+                        template: '<div @click="handlerClick">{{lfz}}<slot v-for="item in list" :item=item>默认</slot></div>',
+                        data: function () {
+                            return {
+                                count: 0,
+                                list: [1, 2]
+                            }
+                        },
+                        methods: {
+                            handlerClick: function () {
+                                this.count++;
+                                this.bus.$emit('bus-change', this.lfz)
+                                // this.$emit('change')
+                            }
+                        },
+                        mounted: function () {
+                            var this_ = this;
+                            this.bus.$on('bus-change', function (msg) {
+                                this_.lfz = msg
+                            })
+                        }
+                    }
+                },
+                data: {
+                    sum: 0,
+                    lfz:'lll'
+                },
+                methods: {
+                    handlerChange: function () {
+                        this.sum = this.$refs.counter1.count + this.$refs.counter2.count
+                    },
+                    handlerClick: function () {
+                        this.lfz=2
+                    }
+                }
+            });
+
+
+        </script>
+    </body>
+
+</html>

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/lfz757077613/goLearn/utils/myConf"
 	"net/http"
 	"sync"
 )
@@ -21,7 +22,7 @@ func GetUserHandler() *UserHandler {
 
 func (handler *UserHandler) HandleLogin(context *gin.Context) {
 	context.JSON(http.StatusOK, gin.H{
-		"key": 11,
+		"result": myConf.GetInt("server","test",-1),
 	})
 }
 
