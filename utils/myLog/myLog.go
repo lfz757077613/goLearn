@@ -50,6 +50,7 @@ func init() {
 		lfshook.WriterMap{
 			logrus.InfoLevel:  infoWriter,
 			logrus.ErrorLevel: errorWriter,
+			logrus.PanicLevel: errorWriter,
 		},
 		&logrus.TextFormatter{
 			DisableColors:   true,
