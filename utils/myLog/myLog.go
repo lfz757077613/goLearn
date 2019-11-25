@@ -46,15 +46,16 @@ func init() {
 		panic(err)
 	}
 	logrus.AddHook(&DefaultFieldsHook{})
+	allWriter := io.MultiWriter(infoWriter, errorWriter)
 	logrus.AddHook(lfshook.NewHook(
 		lfshook.WriterMap{
 			logrus.InfoLevel:  infoWriter,
-			logrus.ErrorLevel: errorWriter,
-			logrus.PanicLevel: errorWriter,
+			logrus.ErrorLevel: allWriter,
+			logrus.PanicLevel: allWriter,
 		},
 		&logrus.TextFormatter{
 			DisableColors:   true,
-			TimestampFormat: _timeStampFormat,
+			TimestampFormat: _timestampFormat,
 		},
 	))
 }
