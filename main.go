@@ -19,7 +19,7 @@ import (
 func main() {
 	r := mux.NewRouter()
 	r.Use(midware.MyRecover, midware.MyLogger, midware.MyParseParam)
-	registPprof(r)
+	registerPprof(r)
 	r.HandleFunc("/next", handler.HandleLogin)
 	s := &http.Server{
 		Addr:         ":" + myConf.GetString("server", "port", "8080"),
@@ -54,8 +54,9 @@ func waitShutDownSignal(s *http.Server) {
 	myLog.Info("Server exit")
 }
 
-func registPprof(r *mux.Router) {
+func registerPprof(r *mux.Router) {
 	s := r.PathPrefix("/debug/pprof").Subrouter()
+	s.HandleFunc("", pprof.Index).Methods(http.MethodGet)
 	s.HandleFunc("/", pprof.Index).Methods(http.MethodGet)
 	s.HandleFunc("/cmdline", pprof.Cmdline).Methods(http.MethodGet)
 	s.HandleFunc("/profile", pprof.Profile).Methods(http.MethodGet)
