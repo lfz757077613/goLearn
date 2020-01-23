@@ -1,33 +1,13 @@
 package handler
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/lfz757077613/goLearn/utils/myConf"
+	"github.com/lfz757077613/goLearn/utils/myLog"
+	"io"
 	"net/http"
-	"sync"
 )
 
-type UserHandler struct {
-}
-
-var userHandlerOnce sync.Once
-var userHandlerSingleton *UserHandler
-
-func GetUserHandler() *UserHandler {
-	userHandlerOnce.Do(func() {
-		userHandlerSingleton = &UserHandler{}
-	})
-	return userHandlerSingleton
-}
-
-func (handler *UserHandler) HandleLogin(context *gin.Context) {
-	context.JSON(http.StatusOK, gin.H{
-		"result": myConf.GetInt("server","test",-1),
-	})
-}
-
-func (handler *UserHandler) HandleIsLogin(context *gin.Context) {
-}
-
-func (handler *UserHandler) HandleRegister(context *gin.Context) {
+func HandleLogin(w http.ResponseWriter, r *http.Request) {
+	if _, err := io.WriteString(w, "ok"); err != nil {
+		myLog.Errorf("handleCheckPreload error: [%s]", err)
+	}
 }

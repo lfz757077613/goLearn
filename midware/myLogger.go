@@ -2,25 +2,40 @@ package midware
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
+	"github.com/lfz757077613/goLearn/utils/myLog"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
+	"net"
+	"net/http"
+	"reflect"
+	"strings"
 	"time"
 )
 
-// 传入绑定了uid的log组件，打印请求整体日志
-func MyLogger(c *gin.Context) {
-	start := time.Now()
-	traceLog := logrus.WithField("uid", c.Query("uid"))
-	c.Set("traceLog", traceLog)
-	c.Next()
-	body, _ := ioutil.ReadAll(c.Request.Body)
-	traceLog.WithFields(logrus.Fields{
-		"remoteIp": c.ClientIP(),
-		"method":   c.Request.Method,
-		"url":      c.Request.RequestURI,
-		"body":     string(body),
-		"status":   c.Writer.Status(),
-		"cost":     fmt.Sprintf("%dms", time.Since(start).Nanoseconds()/1e6),
-	}).Info("total log")
+func MyLogger(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		clientIP, _, _ := net.SplitHostPort(strings.TrimSpace(r.RemoteAddr))
+		next.ServeHTTP(w, r)
+		// w是*http.timeoutWriter，当使用了http.TimeoutHandler时
+		statusField := reflect.ValueOf(w).Elem().FieldByName("code")
+		var status int64
+		if !statusField.IsValid() {
+			// w是*http.response
+			statusField = reflect.ValueOf(w).Elem().FieldByName("status")
+		}
+		if statusField.IsValid() {
+			status = statusField.Int()
+		}
+		body, _ := ioutil.ReadAll(r.Body)
+		myLog.WithFields(logrus.Fields{
+			"remoteIp": clientIP,
+			"method":   r.Method,
+			"url":      r.RequestURI,
+			"bode":     string(body),
+			"status":   status,
+			"cost":     fmt.Sprintf("%dms", time.Since(start).Nanoseconds()/1e6),
+		}).Info("total log")
+	})
 }
+

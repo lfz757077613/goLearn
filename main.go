@@ -2,8 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/gin-contrib/pprof"
-	"github.com/gin-gonic/gin"
+	"github.com/gorilla/mux"
 	"github.com/lfz757077613/goLearn/handler"
 	"github.com/lfz757077613/goLearn/midware"
 	"github.com/lfz757077613/goLearn/utils/myConf"
@@ -17,21 +16,12 @@ import (
 )
 
 func main() {
-	gin.SetMode(gin.ReleaseMode)
-	gin.DisableConsoleColor()
-	r := gin.New()
-	r.RedirectTrailingSlash = false
-	pprof.Register(r)
-	r.Use(midware.MyLogger, midware.MyRecover)
-	// 拥有共同url前缀的的路由可以划为一个分组
-	apiGroup := r.Group("/api")
-	userHandler := handler.UserHandler{}
-	apiGroup.Any("/login", userHandler.HandleLogin)
-	apiGroup.Any("/islogin", userHandler.HandleIsLogin)
-	apiGroup.Any("/register", userHandler.HandleRegister)
+	r := mux.NewRouter()
+	r.Use(midware.MyRecover, midware.MyLogger, midware.MyParseParam)
+	r.HandleFunc("/next", handler.HandleLogin)
 	s := &http.Server{
 		Addr:         ":" + myConf.GetString("server", "port", "8080"),
-		Handler:      r,
+		Handler:      http.TimeoutHandler(r, 3*time.Second, ""),
 		ReadTimeout:  time.Second * time.Duration(myConf.GetInt("server", "readTimeout", 3)),
 		WriteTimeout: time.Second * time.Duration(myConf.GetInt("server", "writeTimeout", 3)),
 	}

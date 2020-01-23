@@ -66,6 +66,10 @@ func WithField(key string, value interface{}) *logrus.Entry {
 	return _logEntry.WithField(key, value)
 }
 
+func WithFields(fields logrus.Fields) *logrus.Entry {
+	return _logEntry.WithFields(fields)
+}
+
 func Info(args ...interface{}) {
 	_logEntry.Info(args...)
 }
