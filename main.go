@@ -9,6 +9,7 @@ import (
 	"github.com/lfz757077613/goLearn/utils/myLog"
 	"github.com/lfz757077613/goLearn/utils/shutDownhook"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,6 +19,7 @@ import (
 func main() {
 	r := mux.NewRouter()
 	r.Use(midware.MyRecover, midware.MyLogger, midware.MyParseParam)
+	registPprof(r)
 	r.HandleFunc("/next", handler.HandleLogin)
 	s := &http.Server{
 		Addr:         ":" + myConf.GetString("server", "port", "8080"),
@@ -50,4 +52,19 @@ func waitShutDownSignal(s *http.Server) {
 	}
 	shutDownhook.RunShutdownHook()
 	myLog.Info("Server exit")
+}
+
+func registPprof(r *mux.Router) {
+	s := r.PathPrefix("/debug/pprof").Subrouter()
+	s.HandleFunc("/", pprof.Index).Methods(http.MethodGet)
+	s.HandleFunc("/cmdline", pprof.Cmdline).Methods(http.MethodGet)
+	s.HandleFunc("/profile", pprof.Profile).Methods(http.MethodGet)
+	s.HandleFunc("/symbol", pprof.Symbol).Methods(http.MethodGet, http.MethodPost)
+	s.HandleFunc("/trace", pprof.Trace).Methods(http.MethodGet)
+	s.HandleFunc("/allocs", pprof.Handler("allocs").ServeHTTP).Methods(http.MethodGet)
+	s.HandleFunc("/block", pprof.Handler("block").ServeHTTP).Methods(http.MethodGet)
+	s.HandleFunc("/goroutine", pprof.Handler("goroutine").ServeHTTP).Methods(http.MethodGet)
+	s.HandleFunc("/heap", pprof.Handler("heap").ServeHTTP).Methods(http.MethodGet)
+	s.HandleFunc("/mutex", pprof.Handler("mutex").ServeHTTP).Methods(http.MethodGet)
+	s.HandleFunc("/threadcreate", pprof.Handler("threadcreate").ServeHTTP).Methods(http.MethodGet)
 }
