@@ -1,7 +1,7 @@
 package shutDownhook
 
 import (
-	"github.com/sirupsen/logrus"
+	"github.com/lfz757077613/goLearn/utils/myLog"
 	"reflect"
 	"runtime"
 )
@@ -13,7 +13,7 @@ func AddShutdownHook(f func()) {
 		defer func() {
 			if err := recover(); err != nil {
 				funcName := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
-				logrus.Errorf("shutdown hook panic wrap [%s]: [%s]", funcName, err)
+				myLog.Errorf("shutdown hook panic wrap [%s]: [%s]", funcName, err)
 			}
 		}()
 		f()

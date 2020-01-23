@@ -6,6 +6,7 @@ import (
 	"github.com/lfz757077613/goLearn/utils"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
+	"io"
 	"time"
 )
 
@@ -16,10 +17,12 @@ const (
 	_maxAgeHour = 72
 	_timeStampFormat = "2016-01-02 15:04:05"
 )
-
+var _logEntry *logrus.Entry
 // 系统监控直接使用Info、Error等，业务监控使用GetUidTraceLog获得和uid绑定的log
 func init() {
-	logrus.SetFormatter(&logrus.TextFormatter{
+	log := logrus.StandardLogger()
+	_logEntry = log.WithField("localIp", utils.GetLocalIp())
+	log.SetFormatter(&logrus.TextFormatter{
 		DisableColors:   true,
 		TimestampFormat: _timeStampFormat,
 	})
@@ -45,11 +48,12 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	logrus.AddHook(&DefaultFieldsHook{})
-	logrus.AddHook(lfshook.NewHook(
+	allWriter := io.MultiWriter(infoWriter, errorWriter)
+	log.AddHook(lfshook.NewHook(
 		lfshook.WriterMap{
 			logrus.InfoLevel:  infoWriter,
-			logrus.ErrorLevel: errorWriter,
+			logrus.ErrorLevel: allWriter,
+			logrus.PanicLevel: allWriter,
 		},
 		&logrus.TextFormatter{
 			DisableColors:   true,
@@ -58,21 +62,37 @@ func init() {
 	))
 }
 
-type DefaultFieldsHook struct {
+func WithField(key string, value interface{}) *logrus.Entry {
+	return _logEntry.WithField(key, value)
 }
 
-func (df *DefaultFieldsHook) Fire(entry *logrus.Entry) error {
-	entry.Data["localIp"] = utils.GetLocalIp()
-	return nil
+func Info(args ...interface{}) {
+	_logEntry.Info(args...)
 }
 
-func (df *DefaultFieldsHook) Levels() []logrus.Level {
-	return logrus.AllLevels
+func Infof(format string, args ...interface{}) {
+	_logEntry.Infof(format, args...)
+}
+
+func Error(args ...interface{}) {
+	_logEntry.Error(args...)
+}
+
+func Errorf(format string, args ...interface{}) {
+	_logEntry.Errorf(format, args...)
+}
+
+func Panic(args ...interface{}) {
+	_logEntry.Panic(args...)
+}
+
+func Panicf(format string, args ...interface{}) {
+	_logEntry.Panicf(format, args...)
 }
 
 func GetUidTraceLog(c *gin.Context) *logrus.Entry {
 	if traceLog, ok := c.Get("traceLog"); ok {
 		return traceLog.(*logrus.Entry)
 	}
-	return logrus.WithField("localIp", utils.GetLocalIp())
+	return _logEntry
 }

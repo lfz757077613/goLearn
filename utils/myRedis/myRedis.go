@@ -4,8 +4,8 @@ import (
 	"errors"
 	"github.com/go-redis/redis"
 	"github.com/lfz757077613/goLearn/utils/myConf"
+	"github.com/lfz757077613/goLearn/utils/myLog"
 	"github.com/lfz757077613/goLearn/utils/shutDownhook"
-	"github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -19,11 +19,11 @@ func init() {
 	})
 	pong, err := Ping()
 	if err != nil || pong != "PONG" {
-		logrus.Panic("init redis client error")
+		myLog.Panic("init redis client error")
 	}
 	shutDownhook.AddShutdownHook(func() {
 		if err := client.Close(); err!=nil {
-			logrus.Errorf("myRedis client close error: [%s]", err)
+			myLog.Errorf("myRedis client close error: [%s]", err)
 		}
 	})
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"io/ioutil"
 	"time"
 )
 
@@ -13,15 +14,13 @@ func MyLogger(c *gin.Context) {
 	traceLog := logrus.WithField("uid", c.Query("uid"))
 	c.Set("traceLog", traceLog)
 	c.Next()
-	rawQuery := ""
-	if c.Request.URL.RawQuery != "" {
-		rawQuery = "?" + c.Request.URL.RawQuery
-	}
+	body, _ := ioutil.ReadAll(c.Request.Body)
 	traceLog.WithFields(logrus.Fields{
 		"remoteIp": c.ClientIP(),
 		"method":   c.Request.Method,
-		"url":      c.Request.URL.Path + rawQuery,
+		"url":      c.Request.RequestURI,
+		"body":     string(body),
 		"status":   c.Writer.Status(),
-		"cost":     fmt.Sprintf("%dms", time.Since(start).Milliseconds()),
+		"cost":     fmt.Sprintf("%dms", time.Since(start).Nanoseconds()/1e6),
 	}).Info("total log")
 }

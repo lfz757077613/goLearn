@@ -7,8 +7,8 @@ import (
 	"github.com/lfz757077613/goLearn/handler"
 	"github.com/lfz757077613/goLearn/midware"
 	"github.com/lfz757077613/goLearn/utils/myConf"
+	"github.com/lfz757077613/goLearn/utils/myLog"
 	"github.com/lfz757077613/goLearn/utils/shutDownhook"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"os/signal"
@@ -36,9 +36,9 @@ func main() {
 		WriteTimeout: time.Second * time.Duration(myConf.GetInt("server", "writeTimeout", 3)),
 	}
 	go func() {
-		logrus.Info("server start")
+		myLog.Info("server start")
 		if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logrus.Panicf("ListenAndServe error: [%s]", err)
+			myLog.Panicf("ListenAndServe error: [%s]", err)
 		}
 	}()
 	// 优雅关机
@@ -52,12 +52,12 @@ func waitShutDownSignal(s *http.Server) {
 	// kill -9 is syscall.SIGKILL but can't be catch, so don't need add it
 	signal.Notify(quitSignalChan, syscall.SIGINT, syscall.SIGTERM)
 	single := <-quitSignalChan
-	logrus.Infof("quit signal received: [%s]", single.String())
+	myLog.Infof("quit signal received: [%s]", single.String())
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := s.Shutdown(ctx); err != nil {
-		logrus.Errorf("Server Shutdown error: [%s]", err)
+		myLog.Errorf("Server Shutdown error: [%s]", err)
 	}
 	shutDownhook.RunShutdownHook()
-	logrus.Info("Server exit")
+	myLog.Info("Server exit")
 }
